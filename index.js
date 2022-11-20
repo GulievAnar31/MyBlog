@@ -66,13 +66,13 @@ app.post('/auth/login', async (req, res) => {
         const user = await UserModel.findOne({ email: req.body.email });
         // на проде нельзя указывать из за чего пользователь не находится
         if(!user){
-         return req.status(404).json({message: 'Ползователь не найден'});
+         return res.status(404).json({message: 'Ползователь не найден'});
         }
 
         const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
 
         if(!isValidPass){
-            return req.status(404).json({message: 'Неверный логин или пароль'});
+            return res.status(404).json({message: 'Неверный логин или пароль'});
         };
 
         const token = await jwt.sign(
