@@ -1,18 +1,21 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import mongoose from "mongoose";
-import {validationResult} from "express-validator";
-import {registerValidation} from "./validations/auth.js";
-import UserModel from "./modules/user.js";
-import checkAuth from "./utils/checkAuth.js";
+import mongoose from 'mongoose';
+import {validationResult} from 'express-validator';
+import {registerValidation} from './validations/auth.js';
+import UserModel from './modules/user.js';
+import checkAuth from './utils/checkAuth.js';
 
 // подключаемся к бд
-mongoose.connect(`mongodb+srv://admin:wwwwww@cluster0.4wpjunr.mongodb.net/blog?retryWrites=true&w=majority`).then(() => {
-  console.log('db ok');
-}).catch((err) => {
-  console.log(err);
-});
+mongoose.connect(
+    `mongodb+srv://admin:wwwwww@cluster0.4wpjunr.mongodb.net/blog?retryWrites=true&w=majority`).
+    then(() => {
+      console.log('db ok');
+    }).
+    catch((err) => {
+      console.log(err);
+    });
 
 // Метод обьета express. С помощью него мы осуществляем маршрутизацию. Определяем как конечные точки приложения отвечают
 // на запросы клиентов
@@ -28,7 +31,7 @@ app.post('/auth/register', registerValidation, async (request, response) => {
       return response.status(400).json(errors.array());
     }
 
-    const password = request.body.password
+    const password = request.body.password;
     const salt = await bcrypt.genSalt(10); // алгоритм шифрования
     const hash = await bcrypt.hash(password, salt); // шифруем пароль
 
@@ -36,26 +39,26 @@ app.post('/auth/register', registerValidation, async (request, response) => {
       email: request.body.email,
       fullName: request.body.fullName,
       avatarUrl: request.body.avatarUrl,
-      passwordHash: hash
+      passwordHash: hash,
     });
 
     const user = await document.save();
 
     const token = await jwt.sign({
-        _id: user._id,
-      },
-      'secret123',
-      {
-        expiresIn: '30d',
-      })
+          _id: user._id,
+        },
+        'secret123',
+        {
+          expiresIn: '30d',
+        });
 
     const {passwordHash, ...userData} = user._doc;
 
-    response.json({...userData, token})
+    response.json({...userData, token});
   } catch (e) {
     response.json({
-      message: `Не удалось зарегестрироваться ${e}`
-    })
+      message: `Не удалось зарегестрироваться ${e}`,
+    });
   }
 });
 
@@ -67,18 +70,21 @@ app.post('/auth/login', async (req, res) => {
     if (!user) {
       // останавливаем код
       return res.status(404).json({message: 'Ползователь не найден'});
-    };
+    }
+    ;
 
-    const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
+    const isValidPass = await bcrypt.compare(req.body.password,
+        user._doc.passwordHash);
 
     if (!isValidPass) {
       return res.status(404).json({message: 'Неверный логин или пароль'});
-    };
+    }
+    ;
 
     const token = await jwt.sign(
-      {_id: user._id},
-      'secret123',
-      {expiresIn: '30d'}
+        {_id: user._id},
+        'secret123',
+        {expiresIn: '30d'},
     );
 
     const {passwordHash, ...userData} = user._doc;
@@ -90,16 +96,31 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-app.get('/auth/me', checkAuth, (req, res) => {
+app.get('/auth/me', checkAuth, async (req, res) => {
   // Здесь расшифровываем наш токен
+  // checkAuth решает выполнять ли код который находится здесь
   try {
-    checkAuth();
-  } catch (err){
+    const user = await UserModel.findById(req.userId);
 
+    if (!user) {
+      return res.status(404).json({
+        message: 'Пользователь не найден',
+      });
+    }
+
+    console.log(user._doc)
+
+
+    // 👿 error next line...
+    res.json({...user._doc});
+  } catch (err) {
+    return res.status(500).json({
+      message: 'Нет доступа',
+    });
   }
-})
+});
 
-app.listen(4444, (err) => { // запускает сервер
+app.listen(5555, (err) => { // запускает сервер
   if (err) {
     return console.log(err);
   }
