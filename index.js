@@ -112,6 +112,7 @@ app.get('/auth/me', checkAuth, async (req, res) => {
 
 
     // 👿 error next line...
+
     res.json({...user._doc});
   } catch (err) {
     return res.status(500).json({
