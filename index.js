@@ -103,7 +103,7 @@ app.get('/auth/me', checkAuth, async (req, res) => {
     const user = await UserModel.findById(req.userId);
 
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         message: 'Пользователь не найден',
       });
     }
@@ -111,9 +111,11 @@ app.get('/auth/me', checkAuth, async (req, res) => {
     console.log(user._doc)
 
 
+    const {...userData} = user._doc;
+
     // 👿 error next line...
 
-    res.json({...user._doc});
+    res.json({...userData});
   } catch (err) {
     return res.status(500).json({
       message: 'Нет доступа',
